@@ -64,6 +64,7 @@ export async function prepareArchive(manifest, cacheDirectory, fetchArchive = fe
     await verifyArchive(archive, manifest);
     verifyMilliseconds = performance.now() - verifyStart;
   }
+  // Lab 2 exact-hit checkpoint: restored archives still pass checksum verification.
   console.log(`CodeQL ${manifest.version}: ${downloaded ? 'downloaded and verified' : 'reused and verified'}; bytes=${manifest.size}; sha256=${manifest.sha256}; download_ms=${Math.round(downloadMilliseconds)}; verify_ms=${Math.round(verifyMilliseconds)}`);
   return { archive, downloaded };
 }
