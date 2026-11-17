@@ -113,3 +113,5 @@ Close your practice PRs, cancel unneeded runs and disable **Lab 02 trusted cache
 Agree with the instructor which of your cache keys to retain until class ends. Several cache versions can use substantial storage; remove only your recorded course caches, not shared entries. Keep downloaded bundles and extracted tools out of Git.
 
 Next: [Lab 3](03-Prewarm.md). The [end-of-class checklist](10-Cleanup.md) covers final cache cleanup.
+
+<!-- Temporary docs-only PR used to verify the Lab 2 workflow path filters. -->
