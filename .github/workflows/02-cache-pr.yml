@@ -1,0 +1,62 @@
+name: Lab 02 PR restore only
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'examples/codeql-bundle.json'
+      - 'tools/prepare-codeql.mjs'
+      - '.github/workflows/02-cache-pr.yml'
+      - 'examples/workflows/02-cache-pr.yml'
+      - '.github/workflows/actions.lock'
+permissions: {}
+cache-mode: read
+concurrency:
+  group: lab-cache-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Restore CodeQL archive cache
+        id: cache
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: .cache/codeql-downloads
+          key: ${{ runner.os }}-${{ runner.arch }}-codeql-lab-eyegi1-20261117-a-${{ hashFiles('examples/codeql-bundle.json') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-codeql-lab-eyegi1-20261117-a-
+      - name: Download only if absent; verify every archive before use
+        id: bundle
+        run: node tools/prepare-codeql.mjs
+      - name: Extract outside the cache and smoke-test this exact bundle
+        env:
+          ARCHIVE: ${{ steps.bundle.outputs.archive }}
+        shell: bash
+        run: |
+          mkdir "$RUNNER_TEMP/lab02-codeql"
+          time tar --zstd -xf "$ARCHIVE" -C "$RUNNER_TEMP/lab02-codeql"
+          "$RUNNER_TEMP/lab02-codeql/codeql/codeql" version
+      - name: Report cache lookup result
+        env:
+          CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
+          CACHE_MATCHED_KEY: ${{ steps.cache.outputs.cache-matched-key }}
+          CACHE_PRIMARY_KEY: ${{ steps.cache.outputs.cache-primary-key }}
+        shell: bash
+        run: |
+          if [[ -z "$CACHE_MATCHED_KEY" ]]; then
+            echo 'Cache miss: no compatible CodeQL archive cache was found.'
+          elif [[ "$CACHE_HIT" == 'true' ]]; then
+            echo "Exact cache hit: $CACHE_MATCHED_KEY"
+          else
+            echo "Compatible partial cache hit: $CACHE_MATCHED_KEY (primary key: $CACHE_PRIMARY_KEY)"
+          fi
